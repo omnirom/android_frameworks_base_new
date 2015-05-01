@@ -36,6 +36,7 @@ interface IDreamManager {
     void testDream(int userId, in ComponentName componentName);
     @UnsupportedAppUsage
     boolean isDreaming();
+    boolean isDozing();
     @UnsupportedAppUsage
     boolean isDreamingOrInPreview();
     boolean canStartDreaming(boolean isScreenOn);
