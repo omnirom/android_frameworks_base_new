@@ -40,6 +40,14 @@
     <string name="qs_data_sim_1">SIM 1</string>
     <string name="qs_data_sim_2">SIM 2</string>
 
+    <!-- Power menu reboot -->
+    <string name="global_action_reboot">Restart</string>
+    <string name="global_action_reboot_more">Restart\u2026</string>
+    <string name="global_action_reboot_sub">System</string>
+    <string name="global_action_reboot_recovery">Recovery</string>
+    <string name="global_action_reboot_bootloader">Bootloader</string>
+    <string name="global_action_reboot_fastboot">Fastboot</string>
+
     <!-- Label for area where tiles can be added to the qs panel -->
     <string name="drag_or_tap_to_add_tiles">Hold &amp; drag or tap to add tiles</string>
 
