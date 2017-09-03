@@ -46,6 +46,7 @@ import com.android.systemui.camera.CameraIntents;
 import com.android.systemui.dagger.SysUISingleton;
 import com.android.systemui.dagger.qualifiers.DisplayId;
 import com.android.systemui.dagger.qualifiers.Main;
+import com.android.systemui.Dependency;
 import com.android.systemui.emergency.EmergencyGesture;
 import com.android.systemui.emergency.EmergencyGestureModule.EmergencyGestureIntentFactory;
 import com.android.systemui.keyguard.WakefulnessLifecycle;
@@ -65,6 +66,7 @@ import com.android.systemui.shade.domain.interactor.ShadeInteractor;
 import com.android.systemui.statusbar.CommandQueue;
 import com.android.systemui.statusbar.notification.stack.NotificationStackScrollLayoutController;
 import com.android.systemui.statusbar.policy.DeviceProvisionedController;
+import com.android.systemui.statusbar.policy.FlashlightController;
 import com.android.systemui.statusbar.policy.HeadsUpManager;
 import com.android.systemui.statusbar.policy.KeyguardStateController;
 import com.android.systemui.statusbar.policy.RemoteInputQuickSettingsDisabler;
@@ -116,6 +118,9 @@ public class CentralSurfacesCommandQueueCallbacks implements CommandQueue.Callba
     private int mDisabled2;
 
     private final EmergencyGestureIntentFactory mEmergencyGestureIntentFactory;
+
+    /*omni add-on*/
+    private FlashlightController mFlashlightController;
 
     @Inject
     CentralSurfacesCommandQueueCallbacks(
@@ -182,6 +187,9 @@ public class CentralSurfacesCommandQueueCallbacks implements CommandQueue.Callba
                 mVibratorOptional, resources);
         mActivityStarter = activityStarter;
         mEmergencyGestureIntentFactory = emergencyGestureIntentFactory;
+
+        // omni
+        mFlashlightController = Dependency.get(FlashlightController.class);
     }
 
     @Override
@@ -563,5 +571,25 @@ public class CentralSurfacesCommandQueueCallbacks implements CommandQueue.Callba
         mShadeController.performHapticFeedback(
                 HapticFeedbackConstants.GESTURE_START
         );
+    }
+
+    @Override
+    public void toggleCameraFlash() {
+        if (mFlashlightController != null) {
+            mFlashlightController.initFlashLight();
+            if (mFlashlightController.hasFlashlight() && mFlashlightController.isAvailable()) {
+                mFlashlightController.setFlashlight(!mFlashlightController.isEnabled());
+            }
+        }
+    }
+
+    @Override
+    public void toggleCameraFlashState(boolean enable) {
+        if (mFlashlightController != null) {
+            mFlashlightController.initFlashLight();
+            if (mFlashlightController.hasFlashlight() && mFlashlightController.isAvailable()) {
+                mFlashlightController.setFlashlight(enable);
+            }
+        }
     }
 }
