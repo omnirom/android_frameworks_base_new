@@ -25,6 +25,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Icon;
+import android.media.AudioAttributes;
 import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
@@ -143,6 +144,8 @@ public class RecordingService extends Service implements ScreenMediaRecorderList
                 NotificationManager.IMPORTANCE_DEFAULT);
         channel.setDescription(getString(R.string.screenrecord_channel_description));
         channel.enableVibration(true);
+        channel.setSound(null, // silent
+                new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build());
         mNotificationManager.createNotificationChannel(channel);
 
         int currentUid = Process.myUid();
