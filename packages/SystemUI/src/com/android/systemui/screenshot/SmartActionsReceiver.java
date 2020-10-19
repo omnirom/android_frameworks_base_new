@@ -34,6 +34,7 @@ public class SmartActionsReceiver extends BroadcastReceiver {
     private static final String TAG = "SmartActionsReceiver";
     // These strings are used for communicating the action invoked to
     // ScreenshotNotificationSmartActionsProvider.
+    public static final String ACTION_TYPE_DELETE = "Delete";
     public static final String EXTRA_ACTION_TYPE = "android:screenshot_action_type";
     public static final String EXTRA_ID = "android:screenshot_id";
     public static final String EXTRA_SMART_ACTIONS_ENABLED = "android:smart_actions_enabled";
@@ -41,6 +42,7 @@ public class SmartActionsReceiver extends BroadcastReceiver {
     public static final String EXTRA_ACTION_INTENT_FILLIN =
             "android:screenshot_action_intent_fillin";
 
+    static final String SCREENSHOT_URI_ID = "android:screenshot_uri_id";
 
     private final ScreenshotSmartActions mScreenshotSmartActions;
 
