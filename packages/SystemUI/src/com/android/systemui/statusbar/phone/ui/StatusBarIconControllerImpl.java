@@ -239,6 +239,17 @@ public class StatusBarIconControllerImpl implements Tunable,
     }
 
     @Override
+    public void setCustomIcon(String slot, StatusBarIcon icon) {
+        if (icon == null) {
+            removeAllIconsForSlot(slot, /* fromNewPipeline */ false);
+            return;
+        }
+
+        StatusBarIconHolder holder = StatusBarIconHolder.fromIcon(icon);
+        setIcon(slot, holder);
+    }
+
+    @Override
     public void setNewWifiIcon() {
         String slot = mContext.getString(com.android.internal.R.string.status_bar_wifi);
         StatusBarIconHolder holder = mStatusBarIconList.getIconHolder(slot, /* tag= */ 0);
