@@ -67,6 +67,7 @@ import com.android.app.viewcapture.ViewCaptureFactory;
 import com.android.internal.annotations.VisibleForTesting;
 import com.android.settingslib.Utils;
 import com.android.systemui.Gefingerpoken;
+import com.android.systemui.Dependency;
 import com.android.systemui.model.SysUiState;
 import com.android.systemui.navigationbar.buttons.ButtonDispatcher;
 import com.android.systemui.navigationbar.buttons.ContextualButton;
@@ -76,6 +77,7 @@ import com.android.systemui.navigationbar.buttons.KeyButtonDrawable;
 import com.android.systemui.navigationbar.buttons.KeyButtonView;
 import com.android.systemui.navigationbar.buttons.NearestTouchFrame;
 import com.android.systemui.navigationbar.gestural.EdgeBackGestureHandler;
+import com.android.systemui.omni.OmniSettingsService;
 import com.android.systemui.recents.Recents;
 import com.android.systemui.res.R;
 import com.android.systemui.settings.DisplayTracker;
@@ -100,7 +102,8 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 /** */
-public class NavigationBarView extends FrameLayout {
+public class NavigationBarView extends FrameLayout implements
+        OmniSettingsService.OmniSettingsObserver {
     final static boolean DEBUG = false;
     final static String TAG = "NavBarView";
 
@@ -150,6 +153,7 @@ public class NavigationBarView extends FrameLayout {
     private boolean mInCarMode = false;
     private boolean mDockedStackExists;
     private boolean mScreenOn = true;
+    private boolean mShowDpadArrowKeys;
 
     private final SparseArray<ButtonDispatcher> mButtonDispatchers = new SparseArray<>();
     private final ContextualButtonGroup mContextualButtonGroup;
@@ -612,7 +616,7 @@ public class NavigationBarView extends FrameLayout {
 
         updateRecentsIcon();
 
-        if (showDpadArrowKeys()) {
+        if (mShowDpadArrowKeys) {
             getKeyButtonViewById(R.id.dpad_left).setImageDrawable(mArrowLeftIcon);
             getKeyButtonViewById(R.id.dpad_right).setImageDrawable(mArrowRightIcon);
             updateDpadKeys();
@@ -625,7 +629,7 @@ public class NavigationBarView extends FrameLayout {
         mContextualButtonGroup.setButtonVisibility(R.id.ime_switcher, !disableImeSwitcher);
 
         // right arrow overrules ime in 3 button mode cause there is not enough space
-        if (QuickStepContract.isLegacyMode(mNavBarMode) && showDpadArrowKeys()) {
+        if (QuickStepContract.isLegacyMode(mNavBarMode) && mShowDpadArrowKeys) {
             mContextualButtonGroup.setButtonVisibility(R.id.ime_switcher, false);
         }
 
@@ -1109,6 +1113,8 @@ public class NavigationBarView extends FrameLayout {
             mViewCaptureCloseable = ViewCaptureFactory.getInstance(getContext())
                     .startCapture(getRootView(), ".NavigationBarView");
         }
+        Dependency.get(OmniSettingsService.class).addIntObserver(this,
+                OmniSettings.OMNI_NAVIGATION_BAR_ARROW_KEYS);
     }
 
     @Override
@@ -1124,6 +1130,7 @@ public class NavigationBarView extends FrameLayout {
         if (mViewCaptureCloseable != null) {
             mViewCaptureCloseable.close();
         }
+        Dependency.get(OmniSettingsService.class).removeObserver(this);
     }
 
     void dump(PrintWriter pw) {
@@ -1234,13 +1241,13 @@ public class NavigationBarView extends FrameLayout {
     }
 
     private void updateDpadKeys() {
-        final int visibility = showDpadArrowKeys() && (mNavigationIconHints
+        final int visibility = mShowDpadArrowKeys && (mNavigationIconHints
                 & StatusBarManager.NAVIGATION_HINT_BACK_ALT) != 0 ? View.VISIBLE : View.GONE;
         getKeyButtonViewById(R.id.dpad_left).setVisibility(visibility);
         getKeyButtonViewById(R.id.dpad_right).setVisibility(visibility);
     }
     public void setDpadDarkIntensity(float darkIntensity) {
-        if (showDpadArrowKeys()) {
+        if (mShowDpadArrowKeys) {
             getKeyButtonViewById(R.id.dpad_left).setDarkIntensity(darkIntensity);
             getKeyButtonViewById(R.id.dpad_right).setDarkIntensity(darkIntensity);
         }
@@ -1248,5 +1255,12 @@ public class NavigationBarView extends FrameLayout {
     private boolean showDpadArrowKeys() {
         return Settings.System.getIntForUser(getContext().getContentResolver(),
                 OmniSettings.OMNI_NAVIGATION_BAR_ARROW_KEYS, 0, UserHandle.USER_CURRENT) != 0;
+    }
+
+    @Override
+    public void onIntSettingChanged(String key, Integer newValue) {
+        mShowDpadArrowKeys = showDpadArrowKeys();
+        updateNavButtonIcons();
+        notifyActiveTouchRegions();
     }
 }
