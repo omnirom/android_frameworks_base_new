@@ -45,4 +45,6 @@
     -->
     <integer name="config_udfps_hbm_type">1</integer>
 
+    <!-- Color of the UDFPS pressed view -->
+     <color name="config_udfpsColor">#ffffffff</color>
 </resources>
