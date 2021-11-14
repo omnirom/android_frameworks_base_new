@@ -35,6 +35,7 @@ import com.android.systemui.fragments.FragmentService;
 import com.android.systemui.model.SysUiState;
 import com.android.systemui.navigationbar.NavigationBarController;
 import com.android.systemui.navigationbar.NavigationModeController;
+import com.android.systemui.omni.OmniSettingsService;
 import com.android.systemui.plugins.DarkIconDispatcher;
 import com.android.systemui.plugins.PluginManager;
 import com.android.systemui.plugins.VolumeDialogController;
@@ -137,6 +138,7 @@ public class Dependency {
     @Inject Lazy<OverviewProxyService> mOverviewProxyService;
     @Inject Lazy<NavigationModeController> mNavBarModeController;
     @Inject Lazy<NavigationBarController> mNavigationBarController;
+    @Inject Lazy<OmniSettingsService> mOmniSettingsService;
     @Inject Lazy<StatusBarStateController> mStatusBarStateController;
     @Inject Lazy<NotificationMediaManager> mNotificationMediaManager;
     @Inject @Background Lazy<Looper> mBgLooper;
@@ -186,6 +188,7 @@ public class Dependency {
         mProviders.put(OverviewProxyService.class, mOverviewProxyService::get);
         mProviders.put(NavigationModeController.class, mNavBarModeController::get);
         mProviders.put(NavigationBarController.class, mNavigationBarController::get);
+        mProviders.put(OmniSettingsService.class, mOmniSettingsService::get);
         mProviders.put(StatusBarStateController.class, mStatusBarStateController::get);
         mProviders.put(NotificationMediaManager.class, mNotificationMediaManager::get);
         mProviders.put(SysUiState.class, mSysUiStateFlagsContainer::get);
