@@ -1115,5 +1115,9 @@
             android:showForAllUsers="true"
             android:theme="@style/ShortcutHelperTheme"
             android:excludeFromRecents="true" />
+
+        <!-- omni additions start -->
+        <service android:name=".omni.CPUInfoService"
+                android:exported="false" />
     </application>
 </manifest>
