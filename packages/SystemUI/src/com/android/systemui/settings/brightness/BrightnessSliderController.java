@@ -233,6 +233,10 @@ public class BrightnessSliderController extends ViewController<BrightnessSliderV
         return mView.isVisibleToUser();
     }
 
+    public void updateThumb(int value) {
+        mView.updateThumb(value);
+    }
+
     private final SeekBar.OnSeekBarChangeListener mSeekListener =
             new SeekBar.OnSeekBarChangeListener() {
         @Override
@@ -243,6 +247,7 @@ public class BrightnessSliderController extends ViewController<BrightnessSliderV
                     mBrightnessSliderHapticPlugin.onProgressChanged(seekBar, progress, fromUser);
                 }
             }
+            mView.updateThumb(progress);
         }
 
         @Override
