@@ -38,4 +38,6 @@ public interface ToggleSlider {
     void showView();
     void hideView();
     boolean isVisible();
+
+    void updateThumb(int value);
 }
