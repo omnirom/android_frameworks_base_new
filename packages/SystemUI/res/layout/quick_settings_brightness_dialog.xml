@@ -30,9 +30,9 @@
             android:layout_height="@dimen/brightness_mirror_height"
             android:layout_gravity="center_vertical"
             android:minHeight="48dp"
-            android:thumb="@null"
-            android:paddingStart="0dp"
-            android:paddingEnd="0dp"
+            android:thumb="@drawable/brightness_progress_thumb"
+            android:paddingStart="@dimen/brightness_progress_padding"
+            android:paddingEnd="@dimen/brightness_progress_padding"
             android:progressDrawable="@drawable/brightness_progress_drawable"
             android:splitTrack="false"
         />
