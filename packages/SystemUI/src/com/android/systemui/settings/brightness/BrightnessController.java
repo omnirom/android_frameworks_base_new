@@ -442,6 +442,7 @@ public class BrightnessController implements ToggleSlider.Listener, MirroredBrig
             // animating it from two different sources causes janky motion.
             // Don't animate if the value is changed via the brightness keys of a keyboard.
             mControl.setValue(target);
+            mControl.updateThumb(target);
             mControlValueInitialized = true;
         }
         mSliderAnimator = ValueAnimator.ofInt(mControl.getValue(), target);
