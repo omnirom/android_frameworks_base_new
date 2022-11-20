@@ -36,6 +36,7 @@ import android.os.Looper;
 import android.os.RemoteException;
 import android.os.UserManager;
 import android.provider.Settings.Global;
+import android.provider.Settings.System;
 import android.service.notification.ZenModeConfig;
 import android.telecom.TelecomManager;
 import android.text.format.DateFormat;
@@ -79,6 +80,8 @@ import com.android.systemui.statusbar.policy.ZenModeController;
 import com.android.systemui.util.RingerModeTracker;
 import com.android.systemui.util.kotlin.JavaAdapter;
 import com.android.systemui.util.time.DateFormatUtil;
+
+import org.omnirom.omnilib.utils.OmniSettings;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -169,6 +172,7 @@ public class PhoneStatusBarPolicy
 
     private BluetoothController mBluetooth;
     private AlarmManager.AlarmClockInfo mNextAlarm;
+    private boolean mShowAlarm;
 
     @Inject
     public PhoneStatusBarPolicy(StatusBarIconController iconController,
@@ -365,6 +369,7 @@ public class PhoneStatusBarPolicy
         mRecordingController.addCallback(this);
         mJavaAdapter.alwaysCollectFlow(mConnectedDisplayInteractor.getConnectedDisplayState(),
                 this::onConnectedDisplayAvailabilityChanged);
+        Dependency.get(OmniSettingsService.class).addIntObserver(this, OmniSettings.OMNI_STATUS_BAR_ALARM);
 
         mCommandQueue.addCallback(this);
     }
@@ -392,7 +397,7 @@ public class PhoneStatusBarPolicy
         final boolean zenNone = zen == Global.ZEN_MODE_NO_INTERRUPTIONS;
         mIconController.setIcon(mSlotAlarmClock, zenNone ? R.drawable.stat_sys_alarm_dim
                 : R.drawable.stat_sys_alarm, buildAlarmContentDescription());
-        mIconController.setIconVisibility(mSlotAlarmClock, mCurrentUserSetup && hasAlarm);
+        mIconController.setIconVisibility(mSlotAlarmClock, mCurrentUserSetup && hasAlarm && mShowAlarm);
     }
 
     private String buildAlarmContentDescription() {
@@ -852,5 +857,12 @@ public class PhoneStatusBarPolicy
         }
 
         mIconController.setIconVisibility(mSlotConnectedDisplay, visible);
+    }
+
+    @Override
+    public void onIntSettingChanged(String key, Integer newValue) {
+        mShowAlarm = System.getIntForUser(mContext.getContentResolver(),
+                OmniSettings.OMNI_STATUS_BAR_ALARM, 0, mUserTracker.getUserId()) != 0;
+        updateAlarm();
     }
 }
