@@ -34,6 +34,7 @@ import android.media.AudioManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.RemoteException;
+import android.os.UserHandle;
 import android.os.UserManager;
 import android.provider.Settings.Global;
 import android.provider.Settings.System;
@@ -45,11 +46,13 @@ import android.view.View;
 
 import androidx.lifecycle.Observer;
 
+import com.android.systemui.Dependency;
 import com.android.systemui.broadcast.BroadcastDispatcher;
 import com.android.systemui.dagger.qualifiers.DisplayId;
 import com.android.systemui.dagger.qualifiers.Main;
 import com.android.systemui.dagger.qualifiers.UiBackground;
 import com.android.systemui.display.domain.interactor.ConnectedDisplayInteractor;
+import com.android.systemui.omni.OmniSettingsService;
 import com.android.systemui.privacy.PrivacyItem;
 import com.android.systemui.privacy.PrivacyItemController;
 import com.android.systemui.privacy.PrivacyType;
@@ -105,7 +108,8 @@ public class PhoneStatusBarPolicy
                 KeyguardStateController.Callback,
                 PrivacyItemController.Callback,
                 LocationController.LocationChangeCallback,
-                RecordingController.RecordingStateChangeCallback {
+                RecordingController.RecordingStateChangeCallback,
+                OmniSettingsService.OmniSettingsObserver {
     private static final String TAG = "PhoneStatusBarPolicy";
     private static final boolean DEBUG = Log.isLoggable(TAG, Log.DEBUG);
 
@@ -172,6 +176,7 @@ public class PhoneStatusBarPolicy
 
     private BluetoothController mBluetooth;
     private AlarmManager.AlarmClockInfo mNextAlarm;
+    private Context mContext;
     private boolean mShowAlarm;
 
     @Inject
@@ -195,7 +200,8 @@ public class PhoneStatusBarPolicy
             PrivacyItemController privacyItemController,
             PrivacyLogger privacyLogger,
             ConnectedDisplayInteractor connectedDisplayInteractor,
-            JavaAdapter javaAdapter
+            JavaAdapter javaAdapter,
+            Context context
     ) {
         mIconController = iconController;
         mCommandQueue = commandQueue;
@@ -227,6 +233,7 @@ public class PhoneStatusBarPolicy
         mRingerModeTracker = ringerModeTracker;
         mPrivacyLogger = privacyLogger;
         mJavaAdapter = javaAdapter;
+        mContext = context;
 
         mSlotCast = resources.getString(com.android.internal.R.string.status_bar_cast);
         mSlotConnectedDisplay = resources.getString(
@@ -393,8 +400,7 @@ public class PhoneStatusBarPolicy
     private void updateAlarm() {
         final AlarmClockInfo alarm = mAlarmManager.getNextAlarmClock(mUserTracker.getUserId());
         final boolean hasAlarm = alarm != null && alarm.getTriggerTime() > 0;
-        int zen = mZenController.getZen();
-        final boolean zenNone = zen == Global.ZEN_MODE_NO_INTERRUPTIONS;
+        final boolean zenNone = !zenAllowsAlarm();
         mIconController.setIcon(mSlotAlarmClock, zenNone ? R.drawable.stat_sys_alarm_dim
                 : R.drawable.stat_sys_alarm, buildAlarmContentDescription());
         mIconController.setIconVisibility(mSlotAlarmClock, mCurrentUserSetup && hasAlarm && mShowAlarm);
@@ -864,5 +870,21 @@ public class PhoneStatusBarPolicy
         mShowAlarm = System.getIntForUser(mContext.getContentResolver(),
                 OmniSettings.OMNI_STATUS_BAR_ALARM, 0, mUserTracker.getUserId()) != 0;
         updateAlarm();
+    }
+
+    private boolean zenAllowsAlarm() {
+        int zen = mZenController.getZen();
+        if (zen == Global.ZEN_MODE_OFF) {
+            return true;
+        }
+        if (zen == Global.ZEN_MODE_NO_INTERRUPTIONS) {
+            return false;
+        }
+        if (zen == Global.ZEN_MODE_ALARMS) {
+            return true;
+        }
+        boolean allowAlarms = (mZenController.getConsolidatedPolicy().priorityCategories & NotificationManager.Policy
+                .PRIORITY_CATEGORY_ALARMS) != 0;
+        return allowAlarms;
     }
 }
