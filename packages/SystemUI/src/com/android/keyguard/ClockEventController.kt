@@ -37,6 +37,7 @@ import com.android.systemui.customization.R
 import com.android.systemui.dagger.qualifiers.Background
 import com.android.systemui.dagger.qualifiers.DisplaySpecific
 import com.android.systemui.dagger.qualifiers.Main
+import com.android.systemui.Dependency
 import com.android.systemui.flags.FeatureFlagsClassic
 import com.android.systemui.flags.Flags.REGION_SAMPLING
 import com.android.systemui.keyguard.MigrateClocksToBlueprint
@@ -49,6 +50,7 @@ import com.android.systemui.keyguard.shared.model.KeyguardState.LOCKSCREEN
 import com.android.systemui.keyguard.shared.model.TransitionState
 import com.android.systemui.lifecycle.repeatWhenAttached
 import com.android.systemui.log.core.Logger
+import com.android.systemui.omni.OmniSettingsService
 import com.android.systemui.plugins.clocks.AlarmData
 import com.android.systemui.plugins.clocks.ClockController
 import com.android.systemui.plugins.clocks.ClockFaceController
@@ -64,6 +66,7 @@ import com.android.systemui.statusbar.policy.BatteryController.BatteryStateChang
 import com.android.systemui.statusbar.policy.ConfigurationController
 import com.android.systemui.statusbar.policy.ZenModeController
 import com.android.systemui.util.concurrency.DelayableExecutor
+import org.omnirom.omnilib.utils.OmniSettings
 import java.util.Locale
 import java.util.TimeZone
 import java.util.concurrent.Executor
@@ -417,6 +420,13 @@ constructor(
             }
         }
 
+    private val settingsListener = object : OmniSettingsService.OmniSettingsObserver {
+        override fun onIntSettingChanged(key: String, newValue: Int) {
+            clock?.events?.onColorPaletteChanged(resources)
+            updateColors()
+        }
+    }
+
     fun registerListeners(parent: View) {
         if (isRegistered) {
             return
@@ -446,6 +456,7 @@ constructor(
             }
         smallTimeListener?.update(shouldTimeListenerRun)
         largeTimeListener?.update(shouldTimeListenerRun)
+        Dependency.get(OmniSettingsService::class.java).addIntObserver(settingsListener, OmniSettings.OMNI_LOCKSCREEN_CLOCK_COLORED)
 
         bgExecutor.execute {
             // Query ZenMode data
@@ -470,6 +481,7 @@ constructor(
         largeRegionSampler?.stopRegionSampler()
         smallTimeListener?.stop()
         largeTimeListener?.stop()
+        Dependency.get(OmniSettingsService::class.java).removeObserver(settingsListener)
         clock?.apply {
             smallClock.view.removeOnAttachStateChangeListener(smallClockOnAttachStateChangeListener)
             largeClock.view.removeOnAttachStateChangeListener(largeClockOnAttachStateChangeListener)
