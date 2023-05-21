@@ -129,3 +129,4 @@
 # SDK
 -keep,allowoptimization,allowaccessmodification class omnirom.** { *; }
 -keep,allowoptimization,allowaccessmodification class org.omnirom.** { *; }
+-keep,allowoptimization,allowaccessmodification class vendor.lineage.** { *; }
