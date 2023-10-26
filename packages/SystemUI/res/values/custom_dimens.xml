@@ -20,4 +20,7 @@
      for different hardware and product builds. -->
 <resources>
     <dimen name="cpu_info_text_height">12dp</dimen>
+
+    <!-- Navigation bar dpad -->
+    <dimen name="navigation_extra_key_width">36dp</dimen>
 </resources>
