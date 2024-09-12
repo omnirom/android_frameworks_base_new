@@ -49,6 +49,7 @@ import com.android.systemui.media.taptotransfer.MediaTttCommandLineHelper
 import com.android.systemui.media.taptotransfer.receiver.MediaTttChipControllerReceiver
 import com.android.systemui.media.taptotransfer.sender.MediaTttSenderCoordinator
 import com.android.systemui.mediaprojection.taskswitcher.MediaProjectionTaskSwitcherCoreStartable
+import com.android.systemui.omni.CPUInfoManager
 import com.android.systemui.settings.MultiUserUtilsModule
 import com.android.systemui.shortcut.ShortcutKeyDispatcher
 import com.android.systemui.statusbar.ImmersiveModeConfirmation
@@ -358,4 +359,10 @@ abstract class SystemUICoreStartableModule {
     @IntoMap
     @ClassKey(BatteryControllerStartable::class)
     abstract fun bindsBatteryControllerStartable(impl: BatteryControllerStartable): CoreStartable
+
+    /** Inject into Omni CPUInfoManager.  */
+    @Binds
+    @IntoMap
+    @ClassKey(CPUInfoManager::class)
+    abstract fun bindCPUInfoManager(sysui: CPUInfoManager): CoreStartable
 }
