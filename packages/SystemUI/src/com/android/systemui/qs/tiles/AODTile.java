@@ -23,11 +23,11 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
-import android.view.View;
 import android.service.quicksettings.Tile;
 
 import androidx.annotation.Nullable;
 
+import com.android.systemui.animation.Expandable;
 import com.android.internal.logging.MetricsLogger;
 import com.android.systemui.dagger.qualifiers.Background;
 import com.android.systemui.dagger.qualifiers.Main;
@@ -126,7 +126,7 @@ public class AODTile extends QSTileImpl<BooleanState> implements
     }
 
     @Override
-    public void handleClick(@Nullable View view) {
+    public void handleClick(@Nullable Expandable expandable) {
         mSetting.setValue(mState.value ? 0 : 1);
     }
 
