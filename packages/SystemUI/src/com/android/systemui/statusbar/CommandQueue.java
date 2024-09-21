@@ -181,6 +181,9 @@ public class CommandQueue extends IStatusBar.Stub implements
     private static final int MSG_ENTER_DESKTOP = 80 << MSG_SHIFT;
     private static final int MSG_SET_SPLITSCREEN_FOCUS = 81 << MSG_SHIFT;
     private static final int MSG_TOGGLE_QUICK_SETTINGS_PANEL = 82 << MSG_SHIFT;
+    private static final int MSG_TOGGLE_CAMERA_FLASH               = 83 << MSG_SHIFT;
+    private static final int MSG_TOGGLE_CAMERA_FLASH_STATE         = 84 << MSG_SHIFT;
+
     public static final int FLAG_EXCLUDE_NONE = 0;
     public static final int FLAG_EXCLUDE_SEARCH_PANEL = 1 << 0;
     public static final int FLAG_EXCLUDE_RECENTS_PANEL = 1 << 1;
@@ -557,6 +560,12 @@ public class CommandQueue extends IStatusBar.Stub implements
          * @see IStatusBar#moveFocusedTaskToDesktop(int)
          */
         default void moveFocusedTaskToDesktop(int displayId) {}
+
+        /**
+         * Omni
+         */
+        default void toggleCameraFlash() { }
+        default void toggleCameraFlashState(boolean enable) { }
     }
 
     @VisibleForTesting
@@ -1483,6 +1492,22 @@ public class CommandQueue extends IStatusBar.Stub implements
         mHandler.obtainMessage(MSG_ENTER_DESKTOP, args).sendToTarget();
     }
 
+    @Override
+    public void toggleCameraFlash() {
+        synchronized (mLock) {
+            mHandler.removeMessages(MSG_TOGGLE_CAMERA_FLASH);
+            mHandler.sendEmptyMessage(MSG_TOGGLE_CAMERA_FLASH);
+        }
+    }
+
+    @Override
+    public void toggleCameraFlashState(boolean enable) {
+        synchronized (mLock) {
+            mHandler.removeMessages(MSG_TOGGLE_CAMERA_FLASH_STATE);
+            mHandler.obtainMessage(MSG_TOGGLE_CAMERA_FLASH_STATE,enable ? 1 : 0, 0, null).sendToTarget();
+        }
+    }
+
     private final class H extends Handler {
         private H(Looper l) {
             super(l);
@@ -2004,6 +2029,16 @@ public class CommandQueue extends IStatusBar.Stub implements
                     }
                     break;
                 }
+                case MSG_TOGGLE_CAMERA_FLASH:
+                    for (int i = 0; i < mCallbacks.size(); i++) {
+                        mCallbacks.get(i).toggleCameraFlash();
+                    }
+                    break;
+                case MSG_TOGGLE_CAMERA_FLASH_STATE:
+                    for (int i = 0; i < mCallbacks.size(); i++) {
+                        mCallbacks.get(i).toggleCameraFlashState(msg.arg1 != 0);
+                    }
+                    break;
             }
         }
     }
