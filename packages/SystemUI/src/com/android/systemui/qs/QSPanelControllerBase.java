@@ -85,6 +85,7 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
     private final DumpManager mDumpManager;
     protected final ArrayList<TileRecord> mRecords = new ArrayList<>();
     protected boolean mShouldUseSplitNotificationShade;
+    private boolean shouldChangeTiles = false;
 
     @Nullable
     private Consumer<Boolean> mMediaVisibilityChangedListener;
@@ -328,7 +329,7 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
 
         // If we detected that the existing tiles are different than the requested tiles, clear them
         // and add the new tiles.
-        if (shouldChangeAll) {
+        if (shouldChangeAll || shouldChangeTiles) {
             for (QSPanelControllerBase.TileRecord record : mRecords) {
                 mView.removeTile(record);
                 record.tile.removeCallback(record.callback);
@@ -600,6 +601,7 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
         if (mView.getTileLayout() != null) {
             mView.getTileLayout().updateSettings();
             setTiles();
+            shouldChangeTiles = true;
         }
     }
 
