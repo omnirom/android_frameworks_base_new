@@ -85,6 +85,7 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
     private final DumpManager mDumpManager;
     protected final ArrayList<TileRecord> mRecords = new ArrayList<>();
     protected boolean mShouldUseSplitNotificationShade;
+    private boolean shouldChangeAll = false;
 
     @Nullable
     private Consumer<Boolean> mMediaVisibilityChangedListener;
@@ -296,7 +297,6 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
         if (!collapsedView && mQsTileRevealController != null) {
             mQsTileRevealController.updateRevealedTiles(tiles);
         }
-        boolean shouldChangeAll = false;
         // If the new tiles are a prefix of the old tiles, we delete the extra tiles (from the old).
         // If not (even if they share a prefix) we remove all and add all the new ones.
         if (tiles.size() <= mRecords.size()) {
@@ -599,6 +599,7 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
     public void onIntSettingChanged(String key, Integer newValue) {
         if (mView.getTileLayout() != null) {
             mView.getTileLayout().updateSettings();
+            shouldChangeAll = true;
             setTiles();
         }
     }
