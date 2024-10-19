@@ -45,9 +45,6 @@
     -->
     <integer name="config_udfps_hbm_type">1</integer>
 
-    <!-- Color of the UDFPS pressed view -->
-     <color name="config_udfpsColor">#ffffffff</color>
-
     <!-- Navigation bar dpad -->
     <string name="config_navBarLayoutHandleArrows" translatable="false">back[1.7WC];home_handle;ime_switcher[1.7WC]</string>
 
