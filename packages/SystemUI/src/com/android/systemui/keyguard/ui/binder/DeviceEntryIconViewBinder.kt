@@ -69,6 +69,7 @@ object DeviceEntryIconViewBinder {
         val longPressHandlingView = view.longPressHandlingView
         val fgIconView = view.iconView
         val bgView = view.bgView
+        var mUseUdfpsIcon = view.getCustomImagePath().exists()
         longPressHandlingView.listener =
             object : LongPressHandlingView.Listener {
                 override fun onLongPressDetected(view: View, x: Int, y: Int) {
@@ -88,6 +89,9 @@ object DeviceEntryIconViewBinder {
             // GONE => AOD transition (even though the view may not be visible until the middle
             // of the transition.
             repeatOnLifecycle(Lifecycle.State.CREATED) {
+                launch("$TAG#AttachOmniObserver") {
+                    view.setObserver()
+                }
                 launch("$TAG#viewModel.isVisible") {
                     viewModel.isVisible.collect { isVisible ->
                         longPressHandlingView.isInvisible = !isVisible
@@ -157,7 +161,7 @@ object DeviceEntryIconViewBinder {
         }
 
         fgIconView.repeatWhenAttached {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
+            repeatOnLifecycle(Lifecycle.State.CREATED) {
                 // Start with an empty state
                 fgIconView.setImageState(StateSet.NOTHING, /* merge */ false)
                 launch("$TAG#fpIconView.viewModel") {
@@ -172,8 +176,10 @@ object DeviceEntryIconViewBinder {
                                     viewModel.type.contentDescriptionResId
                                 )
                         }
-                        fgIconView.imageTintList =
-                            ColorStateList.valueOf(overrideColor?.toArgb() ?: viewModel.tint)
+                        if (!mUseUdfpsIcon) {
+                            fgIconView.imageTintList =
+                                ColorStateList.valueOf(overrideColor?.toArgb() ?: viewModel.tint)
+                        }
                         fgIconView.setPadding(
                             viewModel.padding,
                             viewModel.padding,
@@ -187,12 +193,14 @@ object DeviceEntryIconViewBinder {
 
         bgView.repeatWhenAttached {
             repeatOnLifecycle(Lifecycle.State.CREATED) {
-                launch("$TAG#bgViewModel.alpha") {
-                    bgViewModel.alpha.collect { alpha -> bgView.alpha = alpha }
-                }
-                launch("$TAG#bgViewModel.color") {
-                    bgViewModel.color.collect { color ->
-                        bgView.imageTintList = ColorStateList.valueOf(color)
+                if (!mUseUdfpsIcon) {
+                    launch("$TAG#bgViewModel.alpha") {
+                        bgViewModel.alpha.collect { alpha -> bgView.alpha = alpha }
+                    }
+                    launch("$TAG#bgViewModel.color") {
+                        bgViewModel.color.collect { color ->
+                            bgView.imageTintList = ColorStateList.valueOf(color)
+                        }
                     }
                 }
             }
