@@ -19,6 +19,11 @@ package com.android.systemui.keyguard.ui.view
 import android.content.Context
 import android.graphics.drawable.AnimatedStateListDrawable
 import android.graphics.drawable.AnimatedVectorDrawable
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.drawable.BitmapDrawable
+import android.net.Uri
+import android.os.ParcelFileDescriptor
 import android.util.AttributeSet
 import android.util.StateSet
 import android.view.Gravity
@@ -31,7 +36,11 @@ import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
 import com.airbnb.lottie.LottieCompositionFactory
 import com.airbnb.lottie.LottieDrawable
 import com.android.systemui.common.ui.view.LongPressHandlingView
+import com.android.systemui.omni.OmniSystemUIService
 import com.android.systemui.res.R
+
+import java.io.File
+import java.io.FileDescriptor
 
 class DeviceEntryIconView
 @JvmOverloads
@@ -48,7 +57,11 @@ constructor(
 
     private var animatedIconDrawable: AnimatedStateListDrawable = AnimatedStateListDrawable()
 
+    //omni-addon
+    private var mCustomImage: BitmapDrawable? = null
+
     init {
+        setCustomIcon()
         setupIconStates()
         setupIconTransitions()
         setupAccessibilityDelegate()
@@ -109,11 +122,19 @@ constructor(
             R.id.unlocked,
         )
         // FINGERPRINT
-        animatedIconDrawable.addState(
-            getIconState(IconType.FINGERPRINT, false),
-            context.getDrawable(R.drawable.ic_fingerprint)!!,
-            R.id.locked_fp,
-        )
+       if (mCustomImage == null) {
+            animatedIconDrawable.addState(
+                getIconState(IconType.FINGERPRINT, false),
+                context.getDrawable(R.drawable.ic_fingerprint)!!,
+                R.id.locked_fp,
+            )
+        } else {
+            animatedIconDrawable.addState(
+                getIconState(IconType.FINGERPRINT, false),
+                mCustomImage!!,
+                R.id.locked_fp,
+            )
+        }
 
         // AOD states
         // LOCK
@@ -276,5 +297,30 @@ constructor(
         NONE,
         BOUNCER,
         ENTER,
+    }
+
+    fun setCustomIcon() {
+       if (getCustomImagePath().exists()) {
+            loadCustomImage();
+        } else {
+            mCustomImage = null;
+        }
+    }
+
+    fun loadCustomImage() {
+        try {
+            val parcelFileDescriptor = context.contentResolver.openFileDescriptor(Uri.fromFile(getCustomImagePath()), "r")
+            val fileDescriptor = parcelFileDescriptor?.fileDescriptor
+            val image = BitmapFactory.decodeFileDescriptor(fileDescriptor)
+            parcelFileDescriptor?.close()
+            mCustomImage = BitmapDrawable(resources, image)
+        }
+        catch (e: Exception) {
+            mCustomImage = null
+        }
+    }
+
+    fun getCustomImagePath(): File {
+         return File(context.filesDir, OmniSystemUIService.UFPSIMAGE_FILE_NAME)
     }
 }
