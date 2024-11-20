@@ -238,6 +238,8 @@ import com.android.wm.shell.bubbles.Bubbles;
 import com.android.wm.shell.startingsurface.SplashscreenContentDrawer;
 import com.android.wm.shell.startingsurface.StartingSurface;
 
+import org.omnirom.omnilib.utils.OmniUtils;
+
 import dalvik.annotation.optimization.NeverCompile;
 
 import dagger.Lazy;
@@ -1442,6 +1444,7 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces {
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);
         filter.addAction(Intent.ACTION_SCREEN_OFF);
+        filter.addAction(OmniUtils.ACTION_DISMISS_KEYGUARD);
         mBroadcastDispatcher.registerReceiver(mBroadcastReceiver, filter, null, UserHandle.ALL);
     }
 
@@ -1923,6 +1926,11 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces {
                 }
                 finishBarAnimations();
                 mNotificationsController.resetUserExpandedStates();
+            } else if (OmniUtils.ACTION_DISMISS_KEYGUARD.equals(action)) {
+                if (intent.hasExtra(OmniUtils.DISMISS_KEYGUARD_EXTRA_INTENT)) {
+                    Intent launchIntent = (Intent) intent.getParcelableExtra(OmniUtils.DISMISS_KEYGUARD_EXTRA_INTENT);
+                    mActivityStarter.startActivityDismissingKeyguard(launchIntent, true, true);
+                }
             }
             Trace.endSection();
         }
