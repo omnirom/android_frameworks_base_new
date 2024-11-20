@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "36461be9_90e8dbf8",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000002
+      },
+      "writtenOn": "2024-11-20T21:59:49Z",
+      "side": 1,
+      "message": "needed for https://github.com/omnirom/android_frameworks_base/commit/ebe1144a65f87d5be3af41b20c5260798b5b3ce9",
+      "revId": "d8c9492765df5d7fccf46b91a7aa81a529b93113",
+      "serverId": "ed425d63-8d31-4f40-b4e0-dc35cc52d350"
+    }
+  ]
+}
