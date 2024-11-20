@@ -844,6 +844,9 @@
     <protected-broadcast android:name="android.app.action.CONSOLIDATED_NOTIFICATION_POLICY_CHANGED" />
     <protected-broadcast android:name="android.intent.action.MAIN_USER_LOCKSCREEN_KNOWLEDGE_FACTOR_CHANGED" />
 
+    <!-- omni additions start -->
+    <protected-broadcast android:name="com.android.systemui.ACTION_DISMISS_KEYGUARD" />
+
     <!-- ====================================================================== -->
     <!--                          RUNTIME PERMISSIONS                           -->
     <!-- ====================================================================== -->
