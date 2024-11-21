@@ -2728,9 +2728,11 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         void onLongPress(long eventTime) {
             if (mSingleKeyGestureDetector.beganFromNonInteractive() || isFlashLightIsOn()) {
                 if (mLongPressPowerTorch) {
-                    performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, false,
-                    "Power - Long Press - Torch");
-                    performKeyAction(KEY_ACTION_TOGGLE_TORCH);
+                    if (!mProxyIsNear) {
+                        performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, false,
+                        "Power - Long Press - Torch");
+                        performKeyAction(KEY_ACTION_TOGGLE_TORCH);
+                    }
                     return;
                 }
                 if (!mSupportLongPressPowerWhenNonInteractive) {
