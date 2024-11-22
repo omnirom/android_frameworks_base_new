@@ -1216,7 +1216,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     break;
                 }
             }
-        } else if (mLongPressPowerTorch && mSingleKeyGestureDetector.beganFromNonInteractive()) {
+        } else if (!mProxyIsNear && mLongPressPowerTorch && mSingleKeyGestureDetector.beganFromNonInteractive()) {
             wakeUpFromWakeKey(eventTime, KEYCODE_POWER, /* isDown= */ false);
         }
     }
@@ -2737,6 +2737,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 }
                 if (!mSupportLongPressPowerWhenNonInteractive) {
                     Slog.v(TAG, "Not support long press power when device is not interactive.");
+                    return;
+                }
+                if (mProxyIsNear) {
+                    if (DEBUG_PROXI_SENSOR) Log.i(TAG, "blocked onLongPress because of mProxyIsNear");
                     return;
                 }
             }
