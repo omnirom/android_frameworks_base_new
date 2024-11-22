@@ -277,8 +277,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     static final boolean localLOGV = false;
     static final boolean DEBUG_INPUT = false;
     static final boolean DEBUG_KEYGUARD = false;
-    static final boolean DEBUG_PROXI_SENSOR = false;
-    static final boolean DEBUG_WAKEUP = false;
+    static final boolean DEBUG_PROXI_SENSOR = true;
+    static final boolean DEBUG_WAKEUP = true;
 
     // Whether to allow dock apps with METADATA_DOCK_HOME to temporarily take over the Home key.
     // No longer recommended for desk docks;
@@ -1216,7 +1216,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     break;
                 }
             }
-        } else if (mLongPressPowerTorch && mSingleKeyGestureDetector.beganFromNonInteractive()) {
+        } else if (!mProxyIsNear && mLongPressPowerTorch && mSingleKeyGestureDetector.beganFromNonInteractive()) {
             wakeUpFromWakeKey(eventTime, KEYCODE_POWER, /* isDown= */ false);
         }
     }
@@ -2737,6 +2737,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 }
                 if (!mSupportLongPressPowerWhenNonInteractive) {
                     Slog.v(TAG, "Not support long press power when device is not interactive.");
+                    return;
+                }
+                if (mProxyIsNear) {
+                    if (DEBUG_PROXI_SENSOR) Log.i(TAG, "blocked onLongPress because of mProxyIsNear");
                     return;
                 }
             }
