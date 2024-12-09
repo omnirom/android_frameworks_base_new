@@ -1941,7 +1941,11 @@ public class CentralSurfacesImpl implements CoreStartable, CentralSurfaces {
             } else if (OmniUtils.ACTION_DISMISS_KEYGUARD.equals(action)) {
                 if (intent.hasExtra(OmniUtils.DISMISS_KEYGUARD_EXTRA_INTENT)) {
                     Intent launchIntent = (Intent) intent.getParcelableExtra(OmniUtils.DISMISS_KEYGUARD_EXTRA_INTENT);
-                    mActivityStarter.startActivityDismissingKeyguard(launchIntent, true, true);
+                    mActivityStarter.startActivityDismissingKeyguard(
+                        launchIntent,
+                        true /* onlyProvisioned */,
+                        true /* dismissShade */,
+                        null /* customMessage */);
                 }
             }
             Trace.endSection();
