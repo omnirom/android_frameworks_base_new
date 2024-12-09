@@ -63,9 +63,4 @@
     <!-- Content description indicating that tapping the element will allow deleting the screenshot [CHAR LIMIT=NONE] -->
     <string name="screenshot_delete_description">Delete screenshot</string>
 
-    <string name="screenshot_scroll_label_empty"></string>
-    <string name="screenshot_delete_label_empty"></string>
-    <string name="screenshot_edit_label_empty"></string>
-    <string name="screenshot_share_label_empty"></string>
-    
 </resources>
