@@ -126,7 +126,6 @@ public class ScreenshotController implements ScreenshotHandler {
     public static class SavedImageData {
         public Uri uri;
         public List<Notification.Action> smartActions;
-        public Notification.Action deleteAction;
         public Notification.Action quickShareAction;
         public UserHandle owner;
         public String subject;  // Title for sharing
@@ -139,7 +138,6 @@ public class ScreenshotController implements ScreenshotHandler {
             uri = null;
             smartActions = null;
             quickShareAction = null;
-            deleteAction = null;
             subject = null;
             imageTime = null;
         }
