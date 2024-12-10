@@ -1489,7 +1489,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 break;
             case LONG_PRESS_POWER_TORCH:
                 mPowerKeyHandled = true;
-                performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, false,
+                performHapticFeedback(HapticFeedbackConstants.LONG_PRESS,
                         "Power - Long Press - Toggle Torch");
                 // Toggle torch state asynchronously to help protect against
                 // a misbehaving cameraservice from blocking systemui.
@@ -2766,7 +2766,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             if (mSingleKeyGestureDetector.beganFromNonInteractive() || isFlashLightIsOn()) {
                 if (mLongPressPowerTorch) {
                     if (!mProxyIsNear) {
-                        performHapticFeedback(HapticFeedbackConstants.LONG_PRESS, false,
+                        performHapticFeedback(HapticFeedbackConstants.LONG_PRESS,
                         "Power - Long Press - Torch");
                         performKeyAction(KEY_ACTION_TOGGLE_TORCH);
                     }
