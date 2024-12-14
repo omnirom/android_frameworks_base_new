@@ -91,7 +91,6 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
     private boolean mPowerSaveEnabled;
     private boolean mIsBatteryDefender;
     private boolean mIsIncompatibleCharging;
-    private boolean mDisplayShieldEnabled;
     // Error state where we know nothing about the current battery state
     private boolean mBatteryStateUnknown;
     private boolean mHideBatteryOnUnknown;
@@ -279,7 +278,7 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
         int resId = 0;
         if (mPowerSaveEnabled) {
             resId = R.drawable.battery_unified_attr_powersave;
-        } else if (mIsBatteryDefender && mDisplayShieldEnabled) {
+        } else if (mIsBatteryDefender) {
             resId = R.drawable.battery_unified_attr_defend;
         } else if (isCharging) {
             resId = R.drawable.battery_unified_attr_charging;
@@ -297,7 +296,7 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
     private ColorProfile getCurrentColorProfile() {
         return getColorProfile(
                 mPowerSaveEnabled,
-                mIsBatteryDefender && mDisplayShieldEnabled,
+                mIsBatteryDefender,
                 mPluggedIn,
                 mLevel <= 20);
     }
@@ -417,10 +416,6 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
      */
     void setBatteryEstimateFetcher(BatteryEstimateFetcher fetcher) {
         mBatteryEstimateFetcher = fetcher;
-    }
-
-    void setDisplayShieldEnabled(boolean displayShieldEnabled) {
-        mDisplayShieldEnabled = displayShieldEnabled;
     }
 
     void updatePercentText() {
@@ -702,7 +697,7 @@ public class BatteryMeterView extends LinearLayout implements DarkReceiver {
         float mainBatteryWidth =
                 res.getDimensionPixelSize(R.dimen.status_bar_battery_icon_width) * iconScaleFactor;
 
-        boolean displayShield = mDisplayShieldEnabled && mIsBatteryDefender;
+        boolean displayShield = mIsBatteryDefender;
         float fullBatteryIconHeight =
                 BatterySpecs.getFullBatteryHeight(mainBatteryHeight, displayShield);
         float fullBatteryIconWidth =

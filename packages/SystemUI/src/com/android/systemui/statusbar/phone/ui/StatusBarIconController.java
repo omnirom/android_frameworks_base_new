@@ -18,8 +18,11 @@ package com.android.systemui.statusbar.phone.ui;
 
 import android.annotation.Nullable;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.ArraySet;
+
+import androidx.annotation.DrawableRes;
 
 import com.android.internal.statusbar.StatusBarIcon;
 import com.android.systemui.res.R;
@@ -61,6 +64,19 @@ public interface StatusBarIconController {
      * @hide
      */
     void setCustomIcon(String slot, StatusBarIcon icon);
+
+    /**
+     * Adds or updates an icon for the given slot.
+     *
+     * @param resPackage the package name containing the resource in question. Can be null if the
+     *      icon is a system icon (e.g. a resource from {@code android.R.drawable} or
+     *      {@code com.android.internal.R.drawable}).
+     * @param iconResId id of the drawable resource
+     * @param preloadedIcon optional drawable corresponding to {@code iconResId}, if known
+     */
+    void setResourceIcon(String slot, @Nullable String resPackage, @DrawableRes int iconResId,
+            @Nullable Drawable preloadedIcon, CharSequence contentDescription,
+            StatusBarIcon.Shape shape);
 
     /**
      * Sets up a wifi icon using the new data pipeline. No effect if the wifi icon has already been

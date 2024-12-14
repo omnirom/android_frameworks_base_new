@@ -545,6 +545,10 @@ public class SettingsProvider extends ContentProvider {
                 reportDeviceConfigAccess(prefix);
                 return result;
             }
+            case Settings.CALL_METHOD_LIST_NAMESPACES_CONFIG -> {
+                Bundle result = packageNamespacesForCallResult(getAllConfigFlagNamespaces());
+                return result;
+            }
             case Settings.CALL_METHOD_REGISTER_MONITOR_CALLBACK_CONFIG -> {
                 RemoteCallback callback = args.getParcelable(
                         Settings.CALL_METHOD_MONITOR_CALLBACK_KEY);
@@ -967,7 +971,7 @@ public class SettingsProvider extends ContentProvider {
         for (int i = 0; i < nameCount; i++) {
             String name = names.get(i);
             Setting setting = settingsState.getSettingLocked(name);
-            pw.print("_id:"); pw.print(toDumpString(setting.getId()));
+            pw.print("_id:"); pw.print(toDumpString(String.valueOf(setting.getId())));
             pw.print(" name:"); pw.print(toDumpString(name));
             if (setting.getPackageName() != null) {
                 pw.print(" pkg:"); pw.print(setting.getPackageName());
@@ -1194,6 +1198,8 @@ public class SettingsProvider extends ContentProvider {
 
         synchronized (mLock) {
             if (getSyncDisabledModeConfigLocked() != SYNC_DISABLED_MODE_NONE) {
+                Slog.v(LOG_TAG, "did not write settings for prefix '"
+                                + prefix + "' because sync is disabled");
                 return SET_ALL_RESULT_DISABLED;
             }
             final int key = makeKey(SETTINGS_TYPE_CONFIG, UserHandle.USER_SYSTEM);
@@ -1336,6 +1342,23 @@ public class SettingsProvider extends ContentProvider {
         }
 
         return false;
+    }
+
+    @NonNull
+    private HashSet<String> getAllConfigFlagNamespaces() {
+        Set<String> flagNames = getAllConfigFlags(null).keySet();
+        HashSet<String> namespaces = new HashSet();
+        for (String name : flagNames) {
+            int slashIndex = name.indexOf("/");
+            boolean validSlashIndex = slashIndex != -1
+                        && slashIndex != 0
+                        && slashIndex != name.length();
+            if (validSlashIndex) {
+                String namespace = name.substring(0, slashIndex);
+                namespaces.add(namespace);
+            }
+        }
+        return namespaces;
     }
 
     @NonNull
@@ -1997,8 +2020,6 @@ public class SettingsProvider extends ContentProvider {
             if (!isValidMediaUri(name, value)) {
                 return false;
             }
-            // Invalidate any relevant cache files
-            cacheFile.delete();
         }
 
         final boolean success;
@@ -2034,6 +2055,11 @@ public class SettingsProvider extends ContentProvider {
 
         if (!success) {
             return false;
+        }
+
+        if (cacheFile != null) {
+            // Invalidate any relevant cache files
+            cacheFile.delete();
         }
 
         if ((operation == MUTATION_OPERATION_INSERT || operation == MUTATION_OPERATION_UPDATE)
@@ -2457,10 +2483,10 @@ public class SettingsProvider extends ContentProvider {
         final long identity = Binder.clearCallingIdentity();
         try {
             int currentUser = ActivityManager.getCurrentUser();
-            if (callingUser == currentUser) {
-                // enforce the deny list only if the caller is not current user. Currently only auto
-                // uses background visible user, and auto doesn't support profiles so profiles of
-                // current users is not checked here.
+            if (callingUser == currentUser || callingUser == UserHandle.USER_SYSTEM) {
+                // enforce the deny list only if the caller is not current user or not a system
+                // user. Currently only auto uses background visible user, and auto doesn't
+                // support profiles so profiles of current users is not checked here.
                 return;
             }
         } finally {
@@ -2560,6 +2586,12 @@ public class SettingsProvider extends ContentProvider {
                         prefix);
             }
         }
+        return result;
+    }
+
+    private Bundle packageNamespacesForCallResult(@NonNull HashSet<String> namespaces) {
+        Bundle result = new Bundle();
+        result.putSerializable(Settings.NameValueTable.VALUE, namespaces);
         return result;
     }
 
@@ -2757,7 +2789,7 @@ public class SettingsProvider extends ContentProvider {
 
             switch (column) {
                 case Settings.NameValueTable._ID -> {
-                    values[i] = setting.getId();
+                    values[i] = String.valueOf(setting.getId());
                 }
                 case Settings.NameValueTable.NAME -> {
                     values[i] = setting.getName();
@@ -3266,6 +3298,24 @@ public class SettingsProvider extends ContentProvider {
 
             if (forceNotify || success) {
                 notifyForSettingsChange(key, name);
+
+                // If this is an aconfig flag, it will be written as a staged flag.
+                // Notify that its staged flag value will be updated.
+                if (Flags.notifyIndividualAconfigSyspropChanged() && type == SETTINGS_TYPE_CONFIG) {
+                    int slashIndex = name.indexOf('/');
+                    boolean validSlashIndex = slashIndex != -1
+                            && slashIndex != 0
+                            && slashIndex != name.length();
+                    if (validSlashIndex) {
+                        String namespace = name.substring(0, slashIndex);
+                        String flagName = name.substring(slashIndex + 1);
+                        if (settingsState.getAconfigDefaultFlags().containsKey(flagName)) {
+                            String stagedName = "staged/" + namespace + "*" + flagName;
+                            notifyForSettingsChange(key, stagedName);
+                        }
+                    }
+                }
+
                 if (wasUnsetNonPredefinedSetting) {
                     // Increment the generation number for all non-predefined, unset settings,
                     // because a new non-predefined setting has been inserted

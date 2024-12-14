@@ -695,7 +695,7 @@ public class SettingsBackupAgent extends BackupAgentHelper {
         Cursor cursor = getContentResolver().query(Settings.Global.CONTENT_URI, PROJECTION, null,
                 null, null);
         try {
-            return extractRelevantValues(cursor, GlobalSettings.SETTINGS_TO_BACKUP);
+            return extractRelevantValues(cursor, getGlobalSettingsToBackup());
         } finally {
             cursor.close();
         }
@@ -1031,7 +1031,7 @@ public class SettingsBackupAgent extends BackupAgentHelper {
                 }
             }
         } else if (contentUri.equals(Settings.Global.CONTENT_URI)) {
-            whitelist = ArrayUtils.concat(String.class, GlobalSettings.SETTINGS_TO_BACKUP,
+            whitelist = ArrayUtils.concat(String.class, getGlobalSettingsToBackup(),
                     Settings.Global.LEGACY_RESTORE_SETTINGS);
             validators = GlobalSettingsValidators.VALIDATORS;
         } else {
@@ -1039,6 +1039,17 @@ public class SettingsBackupAgent extends BackupAgentHelper {
         }
 
         return new SettingsBackupWhitelist(whitelist, validators);
+    }
+
+    private String[] getGlobalSettingsToBackup() {
+        // On watches, we don't want to backup or restore 'bluetooth_on' setting, as setting it to
+        // false during restore would cause watch OOBE to fail due to bluetooth connection loss.
+        if (isWatch()) {
+            return ArrayUtils.removeElement(
+                    String.class, GlobalSettings.SETTINGS_TO_BACKUP, Settings.Global.BLUETOOTH_ON);
+        }
+
+        return GlobalSettings.SETTINGS_TO_BACKUP;
     }
 
     private boolean isBlockedByDynamicList(Set<String> dynamicBlockList, Uri areaUri, String key) {
