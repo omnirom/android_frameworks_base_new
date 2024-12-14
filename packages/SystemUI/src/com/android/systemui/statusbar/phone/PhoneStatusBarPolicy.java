@@ -57,17 +57,17 @@ import android.view.View;
 import androidx.lifecycle.Observer;
 
 import com.android.internal.statusbar.StatusBarIcon;
-import com.android.internal.telephony.IccCardConstants;
-import com.android.internal.telephony.TelephonyIntents;
 import com.android.settingslib.bluetooth.CachedBluetoothDevice;
 import com.android.settingslib.graph.BluetoothDeviceLayerDrawable;
 import com.android.systemui.Dependency;
+import com.android.systemui.Flags;
 import com.android.systemui.broadcast.BroadcastDispatcher;
 import com.android.systemui.dagger.qualifiers.DisplayId;
 import com.android.systemui.dagger.qualifiers.Main;
 import com.android.systemui.dagger.qualifiers.UiBackground;
 import com.android.systemui.display.domain.interactor.ConnectedDisplayInteractor;
 import com.android.systemui.omni.OmniSettingsService;
+import com.android.systemui.modes.shared.ModesUiIcons;
 import com.android.systemui.privacy.PrivacyItem;
 import com.android.systemui.privacy.PrivacyItemController;
 import com.android.systemui.privacy.PrivacyType;
@@ -76,12 +76,13 @@ import com.android.systemui.qs.tiles.DndTile;
 import com.android.systemui.qs.tiles.RotationLockTile;
 import com.android.systemui.res.R;
 import com.android.systemui.screenrecord.RecordingController;
+import com.android.systemui.screenrecord.data.model.ScreenRecordModel;
 import com.android.systemui.settings.UserTracker;
 import com.android.systemui.statusbar.CommandQueue;
 import com.android.systemui.statusbar.phone.ui.StatusBarIconController;
 import com.android.systemui.statusbar.policy.BluetoothController;
 import com.android.systemui.statusbar.policy.CastController;
-import com.android.systemui.statusbar.policy.CastController.CastDevice;
+import com.android.systemui.statusbar.policy.CastDevice;
 import com.android.systemui.statusbar.policy.DataSaverController;
 import com.android.systemui.statusbar.policy.DataSaverController.Listener;
 import com.android.systemui.statusbar.policy.DeviceProvisionedController;
@@ -95,6 +96,8 @@ import com.android.systemui.statusbar.policy.RotationLockController.RotationLock
 import com.android.systemui.statusbar.policy.SensorPrivacyController;
 import com.android.systemui.statusbar.policy.UserInfoController;
 import com.android.systemui.statusbar.policy.ZenModeController;
+import com.android.systemui.statusbar.policy.domain.interactor.ZenModeInteractor;
+import com.android.systemui.statusbar.policy.domain.model.ZenModeInfo;
 import com.android.systemui.util.RingerModeTracker;
 import com.android.systemui.util.kotlin.JavaAdapter;
 import com.android.systemui.util.time.DateFormatUtil;
@@ -118,7 +121,6 @@ public class PhoneStatusBarPolicy
                 CommandQueue.Callbacks,
                 RotationLockControllerCallback,
                 Listener,
-                ZenModeController.Callback,
                 DeviceProvisionedListener,
                 KeyguardStateController.Callback,
                 PrivacyItemController.Callback,
@@ -181,6 +183,7 @@ public class PhoneStatusBarPolicy
     private final RecordingController mRecordingController;
     private final RingerModeTracker mRingerModeTracker;
     private final PrivacyLogger mPrivacyLogger;
+    private final ZenModeInteractor mZenModeInteractor;
 
     private boolean mZenVisible;
     private boolean mVibrateVisible;
@@ -216,6 +219,7 @@ public class PhoneStatusBarPolicy
             PrivacyItemController privacyItemController,
             PrivacyLogger privacyLogger,
             ConnectedDisplayInteractor connectedDisplayInteractor,
+            ZenModeInteractor zenModeInteractor,
             JavaAdapter javaAdapter,
             Context context
     ) {
@@ -248,6 +252,7 @@ public class PhoneStatusBarPolicy
         mTelecomManager = telecomManager;
         mRingerModeTracker = ringerModeTracker;
         mPrivacyLogger = privacyLogger;
+        mZenModeInteractor = zenModeInteractor;
         mJavaAdapter = javaAdapter;
         mContext = context;
 
@@ -381,8 +386,18 @@ public class PhoneStatusBarPolicy
         mBluetooth.addCallback(this);
         mProvisionedController.addCallback(this);
         mCurrentUserSetup = mProvisionedController.isCurrentUserSetup();
-        mZenController.addCallback(this);
-        mCast.addCallback(mCastCallback);
+        if (ModesUiIcons.isEnabled()) {
+            // Note that we're not fully replacing ZenModeController with ZenModeInteractor, so
+            // we listen for the extra event here but still add the ZMC callback.
+            mJavaAdapter.alwaysCollectFlow(mZenModeInteractor.getMainActiveMode(),
+                    this::onMainActiveModeChanged);
+        }
+        mZenController.addCallback(mZenControllerCallback);
+        if (!Flags.statusBarScreenSharingChips()) {
+            // If the flag is enabled, the cast icon is handled in the new screen sharing chips
+            // instead of here so we don't need to listen for events here.
+            mCast.addCallback(mCastCallback);
+        }
         mHotspot.addCallback(mHotspotCallback);
         mNextAlarmController.addCallback(mNextAlarmCallback);
         mDataSaver.addCallback(this);
@@ -390,7 +405,11 @@ public class PhoneStatusBarPolicy
         mPrivacyItemController.addCallback(this);
         mSensorPrivacyController.addCallback(mSensorPrivacyListener);
         mLocationController.addCallback(this);
-        mRecordingController.addCallback(this);
+        if (!Flags.statusBarScreenSharingChips()) {
+            // If the flag is enabled, the screen record icon is handled in the new screen sharing
+            // chips instead of here so we don't need to listen for events here.
+            mRecordingController.addCallback(this);
+        }
         mJavaAdapter.alwaysCollectFlow(mConnectedDisplayInteractor.getConnectedDisplayState(),
                 this::onConnectedDisplayAvailabilityChanged);
         Dependency.get(OmniSettingsService.class).addIntObserver(this, OmniSettings.OMNI_STATUS_BAR_ALARM);
@@ -405,15 +424,42 @@ public class PhoneStatusBarPolicy
                 () -> mResources.getString(R.string.accessibility_managed_profile));
     }
 
-    @Override
-    public void onZenChanged(int zen) {
-        updateVolumeZen();
+    private void onMainActiveModeChanged(@Nullable ZenModeInfo mainActiveMode) {
+        if (ModesUiIcons.isUnexpectedlyInLegacyMode()) {
+            return;
+        }
+
+        boolean visible = mainActiveMode != null;
+        if (visible) {
+            // Shape=FIXED_SPACE because mode icons can be from 3P packages and may not be square;
+            // we don't want to allow apps to set incredibly wide icons and take up too much space
+            // in the status bar.
+            mIconController.setResourceIcon(mSlotZen,
+                    mainActiveMode.getIcon().key().resPackage(),
+                    mainActiveMode.getIcon().key().resId(),
+                    mainActiveMode.getIcon().drawable(),
+                    mainActiveMode.getName(),
+                    StatusBarIcon.Shape.FIXED_SPACE);
+        }
+        if (visible != mZenVisible) {
+            mIconController.setIconVisibility(mSlotZen, visible);
+            mZenVisible = visible;
+        }
     }
 
-    @Override
-    public void onConsolidatedPolicyChanged(NotificationManager.Policy policy) {
-        updateVolumeZen();
-    }
+    // TODO: b/308591859 - Should be removed and use the ZenModeInteractor only.
+    private final ZenModeController.Callback mZenControllerCallback =
+            new ZenModeController.Callback() {
+                @Override
+                public void onZenChanged(int zen) {
+                    updateVolumeZen();
+                }
+
+                @Override
+                public void onConsolidatedPolicyChanged(NotificationManager.Policy policy) {
+                    updateVolumeZen();
+                }
+            };
 
     private void updateAlarm() {
         final AlarmClockInfo alarm = mAlarmManager.getNextAlarmClock(mUserTracker.getUserId());
@@ -436,14 +482,23 @@ public class PhoneStatusBarPolicy
         return mResources.getString(R.string.accessibility_quick_settings_alarm, dateString);
     }
 
-    private final void updateVolumeZen() {
+    private void updateVolumeZen() {
+        int zen = mZenController.getZen();
+        if (!ModesUiIcons.isEnabled()) {
+            updateZenIcon(zen);
+        }
+        updateRingerAndAlarmIcons(zen);
+    }
+
+    private void updateZenIcon(int zen) {
+        if (ModesUiIcons.isEnabled()) {
+            Log.wtf(TAG, "updateZenIcon shouldn't be called if MODES_UI_ICONS is enabled");
+            return;
+        }
+
         boolean zenVisible = false;
         int zenIconId = 0;
         String zenDescription = null;
-
-        boolean vibrateVisible = false;
-        boolean muteVisible = false;
-        int zen = mZenController.getZen();
 
         if (DndTile.isVisible(mSharedPreferences) || DndTile.isCombinedIcon(mSharedPreferences)) {
             zenVisible = zen != Global.ZEN_MODE_OFF;
@@ -459,7 +514,21 @@ public class PhoneStatusBarPolicy
             zenDescription = mResources.getString(R.string.interruption_level_priority);
         }
 
-        if (!ZenModeConfig.isZenOverridingRinger(zen, mZenController.getConsolidatedPolicy())) {
+        if (zenVisible) {
+            mIconController.setIcon(mSlotZen, zenIconId, zenDescription);
+        }
+        if (zenVisible != mZenVisible) {
+            mIconController.setIconVisibility(mSlotZen, zenVisible);
+            mZenVisible = zenVisible;
+        }
+    }
+
+    private void updateRingerAndAlarmIcons(int zen) {
+        boolean vibrateVisible = false;
+        boolean muteVisible = false;
+
+        NotificationManager.Policy consolidatedPolicy = mZenController.getConsolidatedPolicy();
+        if (!ZenModeConfig.isZenOverridingRinger(zen, consolidatedPolicy)) {
             final Integer ringerModeInternal =
                     mRingerModeTracker.getRingerModeInternal().getValue();
             if (ringerModeInternal != null) {
@@ -469,14 +538,6 @@ public class PhoneStatusBarPolicy
                     muteVisible = true;
                 }
             }
-        }
-
-        if (zenVisible) {
-            mIconController.setIcon(mSlotZen, zenIconId, zenDescription);
-        }
-        if (zenVisible != mZenVisible) {
-            mIconController.setIconVisibility(mSlotZen, zenVisible);
-            mZenVisible = zenVisible;
         }
 
         if (vibrateVisible != mVibrateVisible) {
@@ -579,10 +640,14 @@ public class PhoneStatusBarPolicy
     }
 
     private void updateCast() {
+        if (Flags.statusBarScreenSharingChips()) {
+            // The cast icon is handled in the new screen sharing chips instead of here.
+            return;
+        }
+
         boolean isCasting = false;
         for (CastDevice device : mCast.getCastDevices()) {
-            if (device.state == CastDevice.STATE_CONNECTING
-                    || device.state == CastDevice.STATE_CONNECTED) {
+            if (device.isCasting()) {
                 isCasting = true;
                 break;
             }
@@ -852,6 +917,10 @@ public class PhoneStatusBarPolicy
     private Runnable mRemoveCastIconRunnable = new Runnable() {
         @Override
         public void run() {
+            if (Flags.statusBarScreenSharingChips()) {
+                // The cast icon is handled in the new screen sharing chips instead of here.
+                return;
+            }
             if (DEBUG) Log.v(TAG, "updateCast: hiding icon NOW");
             mIconController.setIconVisibility(mSlotCast, false);
         }
@@ -860,8 +929,13 @@ public class PhoneStatusBarPolicy
     // Screen Recording
     @Override
     public void onCountdown(long millisUntilFinished) {
+        if (Flags.statusBarScreenSharingChips()) {
+            // The screen record icon is handled in the new screen sharing chips instead of here.
+            return;
+        }
         if (DEBUG) Log.d(TAG, "screenrecord: countdown " + millisUntilFinished);
-        int countdown = (int) Math.floorDiv(millisUntilFinished + 500, 1000);
+        int countdown =
+                (int) ScreenRecordModel.Starting.Companion.toCountdownSeconds(millisUntilFinished);
         int resourceId = R.drawable.stat_sys_screen_record;
         String description = Integer.toString(countdown);
         switch (countdown) {
@@ -884,6 +958,10 @@ public class PhoneStatusBarPolicy
 
     @Override
     public void onCountdownEnd() {
+        if (Flags.statusBarScreenSharingChips()) {
+            // The screen record icon is handled in the new screen sharing chips instead of here.
+            return;
+        }
         if (DEBUG) Log.d(TAG, "screenrecord: hiding icon during countdown");
         mHandler.post(() -> mIconController.setIconVisibility(mSlotScreenRecord, false));
         // Reset talkback priority
@@ -893,6 +971,10 @@ public class PhoneStatusBarPolicy
 
     @Override
     public void onRecordingStart() {
+        if (Flags.statusBarScreenSharingChips()) {
+            // The screen record icon is handled in the new screen sharing chips instead of here.
+            return;
+        }
         if (DEBUG) Log.d(TAG, "screenrecord: showing icon");
         mIconController.setIcon(mSlotScreenRecord,
                 R.drawable.stat_sys_screen_record,
@@ -902,6 +984,10 @@ public class PhoneStatusBarPolicy
 
     @Override
     public void onRecordingEnd() {
+        if (Flags.statusBarScreenSharingChips()) {
+            // The screen record icon is handled in the new screen sharing chips instead of here.
+            return;
+        }
         // Ensure this is on the main thread
         if (DEBUG) Log.d(TAG, "screenrecord: hiding icon");
         mHandler.post(() -> mIconController.setIconVisibility(mSlotScreenRecord, false));
