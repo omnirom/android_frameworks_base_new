@@ -89,8 +89,6 @@ import com.android.systemui.util.settings.SecureSettings;
 import com.google.ux.material.libmonet.dynamiccolor.DynamicColor;
 import com.google.ux.material.libmonet.dynamiccolor.MaterialDynamicColors;
 
-import org.omnirom.omnilib.utils.OmniSettings;
-
 import kotlinx.coroutines.flow.Flow;
 import kotlinx.coroutines.flow.StateFlow;
 
@@ -809,8 +807,6 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
         }
 
         FabricatedOverlay[] fOverlays = null;
-        final boolean enableOverlays = Settings.System.getIntForUser(mContext.getContentResolver(),
-                                            OmniSettings.OMNI_MONET_DISABLE, 0, currentUser) == 0;
 
         if (mNeedsOverlayCreation) {
             mNeedsOverlayCreation = false;
@@ -820,7 +816,7 @@ public class ThemeOverlayController implements CoreStartable, Dumpable {
         }
 
         mThemeManager.applyCurrentUserOverlays(categoryToPackage, fOverlays, currentUser,
-                managedProfiles, onCompleteCallback, enableOverlays);
+                managedProfiles, onCompleteCallback);
 
     }
 
