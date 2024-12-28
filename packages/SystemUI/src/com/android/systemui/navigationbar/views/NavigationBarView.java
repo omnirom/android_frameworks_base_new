@@ -74,6 +74,7 @@ import com.android.systemui.navigationbar.views.buttons.ContextualButton;
 import com.android.systemui.navigationbar.views.buttons.ContextualButtonGroup;
 import com.android.systemui.navigationbar.views.buttons.DeadZone;
 import com.android.systemui.navigationbar.views.buttons.KeyButtonDrawable;
+import com.android.systemui.navigationbar.views.buttons.KeyButtonView;
 import com.android.systemui.navigationbar.views.buttons.NearestTouchFrame;
 import com.android.systemui.omni.OmniSettingsService;
 import com.android.systemui.recents.Recents;

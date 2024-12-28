@@ -963,7 +963,7 @@ public final class BatteryService extends SystemService {
             mLastBatteryLevelCritical = mBatteryLevelCritical;
             mLastInvalidCharger = mInvalidCharger;
             mLastBatteryCycleCount = mHealthInfo.batteryCycleCount;
-            mLastCharingState = mHealthInfo.chargingState;
+            mLastChargingState = mHealthInfo.chargingState;
             mLastBatteryCapacityLevel = mHealthInfo.batteryCapacityLevel;
 
             final int maxChargingMicroWatt;
