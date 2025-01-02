@@ -1020,6 +1020,7 @@ public class SettingsBackupAgent extends BackupAgentHelper {
             // BOOLEAN_VALIDATOR == 0
             // ANY_INTEGER_VALIDATOR == 1
             // ANY_STRING_VALIDATOR == 2
+            // OMNI_INCLUSIVE_INTEGER_VALIDATOR == 3
             for (String key : omniValidators.keySet()) {
                 Integer validatorId = omniValidators.get(key);
                 if (validatorId == 0) {
@@ -1028,6 +1029,8 @@ public class SettingsBackupAgent extends BackupAgentHelper {
                     validators.put(key, SettingsValidators.ANY_INTEGER_VALIDATOR);
                 } else if (validatorId == 2) {
                     validators.put(key, SettingsValidators.ANY_STRING_VALIDATOR);
+                } else if (validatorId == 3) {
+                    validators.put(key, SettingsValidators.OMNI_INCLUSIVE_INTEGER_VALIDATOR);
                 }
             }
         } else if (contentUri.equals(Settings.Global.CONTENT_URI)) {

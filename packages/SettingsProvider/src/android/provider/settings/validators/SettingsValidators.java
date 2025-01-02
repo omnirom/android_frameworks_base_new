@@ -35,6 +35,9 @@ import java.util.Locale;
  */
 public class SettingsValidators {
 
+    public static final Validator OMNI_INCLUSIVE_INTEGER_VALIDATOR =
+            new InclusiveIntegerRangeValidator(0, 0);
+
     public static final Validator BOOLEAN_VALIDATOR =
             new DiscreteValueValidator(new String[] {"0", "1"});
 
