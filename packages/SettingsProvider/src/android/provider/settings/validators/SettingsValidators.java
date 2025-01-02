@@ -35,6 +35,15 @@ import java.util.Locale;
  */
 public class SettingsValidators {
 
+    public static final Validator OMNI_CHARGING_CONTROL_LIMIT_VALIDATOR =
+            new InclusiveIntegerRangeValidator(70, 100);
+
+    public static final Validator OMNI_CHARGING_CONTROL_MODE_VALIDATOR =
+            new InclusiveIntegerRangeValidator(1, 3);
+
+    public static final Validator OMNI_CHARGING_CONTROL_TIME_VALIDATOR =
+            new InclusiveIntegerRangeValidator(0, 86400);
+
     public static final Validator BOOLEAN_VALIDATOR =
             new DiscreteValueValidator(new String[] {"0", "1"});
 
