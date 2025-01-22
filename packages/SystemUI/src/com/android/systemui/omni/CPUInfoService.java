@@ -82,6 +82,7 @@ public class CPUInfoService extends Service {
         private float mAscent;
         private int mFH;
         private int mMaxWidth;
+        private int mExtraPaddingTop;
 
         private int mNeededWidth;
         private int mNeededHeight;
@@ -130,6 +131,7 @@ public class CPUInfoService extends Service {
             setBackgroundColor(Color.argb(0x60, 0, 0, 0));
 
             final int textSize = mTextHeight;
+            mExtraPaddingTop = c.getResources().getDimensionPixelSize(R.dimen.status_bar_height);
 
             Typeface typeface = Typeface.create("monospace", Typeface.NORMAL);
 
@@ -200,10 +202,10 @@ public class CPUInfoService extends Service {
             final int RIGHT = getWidth()-1;
 
             int x = RIGHT - mPaddingRight;
-            int top = mPaddingTop + 2;
-            int bottom = mPaddingTop + mFH - 2;
+            int top = mExtraPaddingTop + mPaddingTop + 2;
+            int bottom = mExtraPaddingTop + mPaddingTop + mFH - 2;
 
-            int y = mPaddingTop - (int)mAscent;
+            int y = mExtraPaddingTop + mPaddingTop - (int)mAscent;
 
             if(!mCpuTemp.equals("0")) {
                 canvas.drawText("Temp: " + getCpuTemp(mCpuTemp) + "°C",
@@ -232,7 +234,7 @@ public class CPUInfoService extends Service {
             final int NW = mNumCpus;
 
             int neededWidth = mPaddingLeft + mPaddingRight + mMaxWidth;
-            int neededHeight = mPaddingTop + mPaddingBottom + (mFH*((mCpuTempAvail?1:0)+NW));
+            int neededHeight = mExtraPaddingTop + mPaddingTop + mPaddingBottom + (mFH*((mCpuTempAvail?1:0)+NW));
             if (neededWidth != mNeededWidth || neededHeight != mNeededHeight) {
                 mNeededWidth = neededWidth;
                 mNeededHeight = neededHeight;
@@ -323,7 +325,9 @@ public class CPUInfoService extends Service {
             PixelFormat.TRANSLUCENT);
         params.gravity = Gravity.RIGHT | Gravity.TOP;
         params.setTitle("CPU Info");
-
+        // we force a unified top margin in mExtraPaddingTop under status bar
+        params.layoutInDisplayCutoutMode =
+                WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS;
         startThread();
 
         mDreamManager = IDreamManager.Stub.asInterface(
