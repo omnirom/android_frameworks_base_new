@@ -25,6 +25,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.InsetDrawable;
 import android.graphics.text.LineBreaker;
@@ -471,7 +472,7 @@ public class KeyguardSliceView extends LinearLayout {
         private void updateDrawableColors() {
             final int color = getCurrentTextColor();
             for (Drawable drawable : getCompoundDrawables()) {
-                if (drawable != null) {
+                if (drawable != null && !(drawable instanceof BitmapDrawable)) {
                     drawable.setTint(color);
                 }
             }
