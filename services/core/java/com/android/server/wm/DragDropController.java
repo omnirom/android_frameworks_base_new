@@ -228,7 +228,7 @@ class DragDropController {
                         final Display display = displayContent.getDisplay();
                         touchFocusTransferredFuture = mCallback.get().registerInputChannel(
                                 mDragState, display, mService.mInputManager,
-                                callingWin.mInputChannel);
+                                callingWin.mInputChannelToken);
                     } else {
                         // Skip surface logic for a drag triggered by an AccessibilityAction
                         mDragState.broadcastDragStartedLocked(touchX, touchY);

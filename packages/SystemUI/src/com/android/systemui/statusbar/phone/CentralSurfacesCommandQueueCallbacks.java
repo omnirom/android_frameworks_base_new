@@ -50,6 +50,7 @@ import com.android.systemui.Dependency;
 import com.android.systemui.emergency.EmergencyGesture;
 import com.android.systemui.emergency.EmergencyGestureModule.EmergencyGestureIntentFactory;
 import com.android.systemui.keyguard.WakefulnessLifecycle;
+import com.android.systemui.keyguard.domain.interactor.KeyguardInteractor;
 import com.android.systemui.plugins.ActivityStarter;
 import com.android.systemui.qs.QSHost;
 import com.android.systemui.qs.QSPanelController;
@@ -111,6 +112,7 @@ public class CentralSurfacesCommandQueueCallbacks implements CommandQueue.Callba
     private final Lazy<CameraLauncher> mCameraLauncherLazy;
     private final QuickSettingsController mQsController;
     private final QSHost mQSHost;
+    private final KeyguardInteractor mKeyguardInteractor;
     private static final VibrationAttributes HARDWARE_FEEDBACK_VIBRATION_ATTRIBUTES =
             VibrationAttributes.createForUsage(VibrationAttributes.USAGE_HARDWARE_FEEDBACK);
 
@@ -153,6 +155,7 @@ public class CentralSurfacesCommandQueueCallbacks implements CommandQueue.Callba
             UserTracker userTracker,
             QSHost qsHost,
             ActivityStarter activityStarter,
+            KeyguardInteractor keyguardInteractor,
             EmergencyGestureIntentFactory emergencyGestureIntentFactory) {
         mCentralSurfaces = centralSurfaces;
         mQsController = quickSettingsController;
@@ -181,7 +184,7 @@ public class CentralSurfacesCommandQueueCallbacks implements CommandQueue.Callba
         mCameraLauncherLazy = cameraLauncherLazy;
         mUserTracker = userTracker;
         mQSHost = qsHost;
-
+        mKeyguardInteractor = keyguardInteractor;
         mVibrateOnOpening = resources.getBoolean(R.bool.config_vibrateOnIconAnimation);
         mCameraLaunchGestureVibrationEffect = getCameraGestureVibrationEffect(
                 mVibratorOptional, resources);
@@ -359,6 +362,8 @@ public class CentralSurfacesCommandQueueCallbacks implements CommandQueue.Callba
             }
             return;
         }
+        mKeyguardInteractor.onCameraLaunchDetected(source);
+
         if (!mCentralSurfaces.isDeviceInteractive()) {
             mPowerManager.wakeUp(SystemClock.uptimeMillis(), PowerManager.WAKE_REASON_CAMERA_LAUNCH,
                     "com.android.systemui:CAMERA_GESTURE");
@@ -391,6 +396,7 @@ public class CentralSurfacesCommandQueueCallbacks implements CommandQueue.Callba
                 if (mStatusBarKeyguardViewManager.isBouncerShowing()) {
                     mStatusBarKeyguardViewManager.reset(true /* hide */);
                 }
+                mCentralSurfaces.startLaunchTransitionTimeout();
                 mCameraLauncherLazy.get().launchCamera(source,
                         mPanelExpansionInteractor.isFullyCollapsed());
                 mCentralSurfaces.updateScrimController();

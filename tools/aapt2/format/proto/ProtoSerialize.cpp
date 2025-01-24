@@ -720,6 +720,9 @@ void SerializeValueToPb(const Value& value, pb::Value* out_value, android::Strin
   if (src_pool != nullptr) {
     SerializeSourceToPb(value.GetSource(), src_pool, out_value->mutable_source());
   }
+  if (out_value->has_item()) {
+    out_value->mutable_item()->set_flag_status((uint32_t)value.GetFlagStatus());
+  }
 }
 
 void SerializeItemToPb(const Item& item, pb::Item* out_item) {
@@ -727,6 +730,7 @@ void SerializeItemToPb(const Item& item, pb::Item* out_item) {
   ValueSerializer serializer(&value, nullptr);
   item.Accept(&serializer);
   out_item->MergeFrom(value.item());
+  out_item->set_flag_status((uint32_t)item.GetFlagStatus());
 }
 
 void SerializeCompiledFileToPb(const ResourceFile& file, pb::internal::CompiledFile* out_file) {
