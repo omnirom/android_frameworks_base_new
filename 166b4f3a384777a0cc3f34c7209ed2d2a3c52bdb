@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "de0798b6_460ceec6",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 2
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1000002
+      },
+      "writtenOn": "2025-01-28T23:19:41Z",
+      "side": 1,
+      "message": "but this change AOD too",
+      "revId": "166b4f3a384777a0cc3f34c7209ed2d2a3c52bdb",
+      "serverId": "ed425d63-8d31-4f40-b4e0-dc35cc52d350"
+    }
+  ]
+}
